@@ -5,6 +5,9 @@ version = 3
 [[package]]
 name = "external-services"
 version = "0.1.0"
+dependencies = [
+ "persistence",
+]
 
 [[package]]
 name = "persistence"
