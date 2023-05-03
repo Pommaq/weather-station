@@ -1,5 +1,5 @@
-extern crate persistence;
 extern crate external_services;
+extern crate persistence;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right
