@@ -1,0 +1,2 @@
+[workspace]
+members=["presentation", "external-services", "persistence", "services",]
