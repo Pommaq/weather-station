@@ -11,5 +11,5 @@ steps:
   - name: test
     image: rust:1
     commands:
-      - cargo build --verbose --all
-      - cargo test --verbose --all
+      - cargo build  --all
+      - cargo test  --all
