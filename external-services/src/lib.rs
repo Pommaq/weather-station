@@ -1,5 +1,5 @@
 mod navtex;
-
+extern crate hound;
 extern crate persistence;
 
 pub fn add(left: usize, right: usize) -> usize {

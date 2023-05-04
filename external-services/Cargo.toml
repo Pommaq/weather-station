@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 persistence={path="../persistence"}
+hound = "3.5.0"
