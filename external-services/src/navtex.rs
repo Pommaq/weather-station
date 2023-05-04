@@ -14,6 +14,10 @@ All NAVTEX broadcasts are made on 518 kHz, using narrow-band direct printing 7-u
 pub mod wav {
     use hound;
     /*
+        https://www.allaboutcircuits.com/textbook/radio-frequency-analysis-design/radio-frequency-demodulation/how-to-demodulate-digital-phase-modulation/
+        https://thinkrf.com/solutions/signal-analysis-demodulation/
+        https://www.embedded.com/the-goertzel-algorithm/
+
         we need to do a bit of math. We know Navtex transmit at 100 baud,
         so every 1/100th second there is a "bit". We expect to read at
         518Khz and our sample file is at 1953hz sample rate.
