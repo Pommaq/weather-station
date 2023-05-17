@@ -23,7 +23,7 @@ pub fn get_amplitudes_from_wav(path: &str) -> Result<Vec<f64>> {
 mod tests {
 
     use super::*;
-    const SAMPLEPATH: &str = "../samples/navtex_2023-02-21T16_40_30_201 mono.wav";
+    const SAMPLEPATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
 
     #[test]
     fn amplitude_iter_test() {

@@ -416,7 +416,6 @@ name = "inquire-frontend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "hound",
  "inquire",
  "plotters",
  "services",
