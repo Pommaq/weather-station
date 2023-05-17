@@ -1,5 +1,3 @@
-use std::io::BufRead;
-
 /// https://goughlui.com/2019/10/05/project-navtex-message-gallery-august-september-2019/
 /// Sample source: https://www.sdrangel.org/iq-files/
 /*
@@ -16,7 +14,7 @@ All NAVTEX broadcasts are made on 518 kHz, using narrow-band direct printing 7-u
 /// and are assumed to be shifted 90degrees from eachother
 /// as is the custom with IQ modulation
 pub mod iq {
-    use std::f64::consts::PI;
+    use std::{f64::consts::PI, io::BufRead};
 
     pub fn phase(i: f64, q: f64) -> f64 {
         (q / i).atan()
@@ -37,7 +35,46 @@ pub mod iq {
 }
 
 pub mod wav {
-    use hound;
+    use hound::{self, WavReader, WavSamples};
+    use std::{fs::File, io::BufReader};
+    use thiserror::Error;
+    use crate::navtex::iq;
+
+    #[derive(Error, Debug)]
+    enum WavError {
+        
+        #[error(transparent)]
+        IO(#[from] hound::Error)
+    }   
+
+    /* 
+    We want an iterator that takes ownership of an outside iterator,
+     iterating over it and calculating what we want as we go
+    */ 
+    struct AmplitudeIterator<'a ,T: Iterator<Item=(&'a i16, &'a i16)>> {
+        inner: &'a mut  T,
+    }
+
+    impl <'a, T:  Iterator<Item=(&'a i16,&'a i16)>> AmplitudeIterator<'a, T> {
+        fn new(iter: &'a mut T) -> Self {
+            Self{inner: iter}
+        }
+    }
+
+    impl<'a ,T: Iterator<Item=(&'a i16, &'a i16)>> Iterator for AmplitudeIterator<'a, T> {
+        type Item = f64;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            match self.inner.next() {
+                Some((i, q)) => {
+                    Some(iq::amplitude(i.clone() as f64, q.clone() as f64))
+                },
+                None => {None}
+            }
+        }
+    }
+    
+
     #[cfg(test)]
     mod tests {
         use crate::navtex::iq;
@@ -46,21 +83,48 @@ pub mod wav {
         use std::i16;
         use std::io::Write;
 
+        use super::AmplitudeIterator;
+
         const NAVTEX_SAMPLE_PATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
 
         #[test]
         fn can_detect_stereo() {
-            let reader = hound::WavReader::open(NAVTEX_SAMPLE_PATH).unwrap();
+            let reader: hound::WavReader<std::io::BufReader<File>> = hound::WavReader::open(NAVTEX_SAMPLE_PATH).unwrap();
             let num_channels = reader.spec().channels;
             assert_eq!(num_channels, 2, "Unable to see that wav file is stereo");
+        }
+
+        #[test]
+        fn amplitude_iter_test() {
+            let mut reader = hound::WavReader::open(NAVTEX_SAMPLE_PATH).unwrap(); 
+            let binding  = reader
+            .samples::<i16>()
+            .collect::<Vec<_>>();
+
+            let mut iterator = binding
+            .windows(2)
+            .step_by(2)
+            .map(|x| {
+               let i = x[0].as_ref().unwrap();
+               let q = x[1].as_ref().unwrap();
+               (i, q)
+            });
+
+            let amplitudes =  AmplitudeIterator::new(&mut iterator);
+            for _ in amplitudes {
+                /* 
+                    Intentionally left empty
+                    We just want to see if it panics or not
+                */
+            }
         }
 
         #[test]
         fn calculate_frequency() {
             let mut output = File::create("./result.txt").unwrap();
 
-            let mut reader = hound::WavReader::open(NAVTEX_SAMPLE_PATH).unwrap();
-            reader
+            let mut reader = hound::WavReader::open(NAVTEX_SAMPLE_PATH).unwrap(); 
+            let _ = reader
                 .samples::<i16>()
                 .collect::<Vec<_>>()
                 .windows(4)

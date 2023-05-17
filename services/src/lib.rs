@@ -5,6 +5,16 @@ pub fn add(left: usize, right: usize) -> usize {
     left + right
 }
 
+pub mod iq {
+    use external_services::navtex::{iq, wav};
+    use anyhow::Result;
+
+    fn get_amplitude_iterator(path: &str) -> impl Iterator<Item = f64> {
+            
+        todo!()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

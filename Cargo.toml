@@ -1,2 +1,2 @@
 [workspace]
-members=["presentation", "external-services", "persistence", "services",]
+members=["external-services", "persistence", "services", "inquire"]

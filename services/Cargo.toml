@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 persistence={path="../persistence"}
 external-services={path="../external-services"}
+anyhow = "1.0.71"

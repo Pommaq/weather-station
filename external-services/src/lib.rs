@@ -1,4 +1,4 @@
-mod navtex;
+pub mod navtex;
 extern crate hound;
 extern crate persistence;
 
