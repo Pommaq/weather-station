@@ -119,3 +119,10 @@ In analog demodulation, the signal doesn’t really have a beginning or an end. 
     Instantaneous frequency is the derivative of instantenous phase. 
 
 Can likely take inspiration from https://github.com/projecthorus/radiosonde_auto_rx
+
+
+https://www.youtube.com/watch?v=spUNpyF58BY
+https://docs.rs/dft/latest/dft/
+
+Fourier transformations convert a mixed signal into a series of peaks,
+The peaks at specific locations tells us that that frequency is inside the mixed signal. 

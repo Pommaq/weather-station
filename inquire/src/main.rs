@@ -6,17 +6,17 @@ extern crate services;
 use inquire::validator::Validation;
 use inquire::Text;
 use plotters::prelude::*;
-use services::get_amplitudes_from_wav;
+use services::get_if_frequency_from_wav;
 
 fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyhow::Result<()> {
     std::fs::File::create(output_path)?;
 
-    let data = (0..=sample_size)
+    let data = (0..sample_size)
         .map(|x| (x as f64, amplitudes[x]))
         .collect::<Vec<(f64, f64)>>();
 
-    let drawing_area =
-        BitMapBackend::new(output_path, ((sample_size / 2) as u32, 200)).into_drawing_area();
+    // Set number of pixels on drawing
+    let drawing_area = BitMapBackend::new(output_path, (4000 as u32, 1000)).into_drawing_area();
 
     drawing_area.fill(&WHITE).unwrap();
 
@@ -26,7 +26,7 @@ fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyh
         .set_left_and_bottom_label_area_size(20);
 
     let mut chart_context = chart_builder
-        .build_cartesian_2d(0.0..sample_size as f64, 0.0..300.0)
+        .build_cartesian_2d(0.0..sample_size as f64, -1.0..1.0)
         .unwrap();
 
     chart_context.configure_mesh().draw().unwrap();
@@ -34,7 +34,7 @@ fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyh
     chart_context
         .draw_series(LineSeries::new(data, BLACK))
         .unwrap()
-        .label("I/Q amplitude")
+        .label("IF")
         .legend(|(x, y)| Rectangle::new([(x - 15, y + 1), (x, y)], BLACK));
 
     chart_context
@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
         .with_validator(validator)
         .prompt()?;
 
-    let amplitudes = get_amplitudes_from_wav(&input_path)?;
+    let amplitudes = get_if_frequency_from_wav(&input_path)?;
 
     let output_path = Text::new("Enter output filename").prompt()?;
 
@@ -76,16 +76,18 @@ fn main() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use services::get_amplitudes_from_wav;
+    use services::get_if_frequency_from_wav;
 
     use crate::draw_chart;
 
-    const SAMPLE_PATH: &str = "../samples/navtex_2023-02-21T16_40_30_201 mono.wav";
+    const SAMPLE_PATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
 
     #[test]
     fn is_drawable() {
-        let amplitudes = get_amplitudes_from_wav(SAMPLE_PATH).unwrap();
+        let amplitudes = get_if_frequency_from_wav(SAMPLE_PATH).unwrap();
         let output = "aaaa.png";
-        draw_chart(output, &amplitudes[4000..amplitudes.len()], 10000).unwrap();
+        let sample = &amplitudes[4000..4000 + 3000];
+
+        draw_chart(output, sample, sample.len()).unwrap();
     }
 }

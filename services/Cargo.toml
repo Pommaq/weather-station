@@ -10,3 +10,4 @@ persistence={path="../persistence"}
 external-services={path="../external-services"}
 anyhow = "1.0.71"
 hound = "3.5.0"
+dft = "0.5.5"
