@@ -126,3 +126,16 @@ https://docs.rs/dft/latest/dft/
 
 Fourier transformations convert a mixed signal into a series of peaks,
 The peaks at specific locations tells us that that frequency is inside the mixed signal. 
+
+https://pysdr.org/content/sampling.html
+
+
+we can convert a signal to the frequency domain using an FFT, and the result is called the Power Spectral Density (PSD). But to actually find the PSD of a batch of samples and plot it, we do more than just take an FFT. We must do the following six operations to calculate PSD:
+
+    * Take the FFT of our samples. If we have x samples, the FFT size will be the length of x by default. Let’s use the first 1024 samples as an example to create a 1024-size FFT. The output will be 1024 complex floats.
+    * Take the magnitude of the FFT output, which provides us 1024 real floats.
+    * Square the resulting magnitude to get power.
+    * Normalize: divide by the FFT size (N) and sample rate (Fs).
+    * Convert to dB using 10 \log_{10}(); we always view PSDs in log scale.
+    * Perform an FFT shift, covered in the previous chapter, to move “0 Hz” in the center and negative frequencies to the left of center
+

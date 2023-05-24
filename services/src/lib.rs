@@ -11,6 +11,7 @@ use iq::IFIterator;
 /// as is the custom with IQ modulation
 pub mod iq;
 
+
 pub fn get_magnitudes_from_wav(path: &str) -> Result<Vec<f64>> {
     use iq::MagnitudeIterator;
 
@@ -41,17 +42,45 @@ pub fn get_if_frequency_from_wav(path: &str) -> Result<Vec<f64>> {
     Ok(IFIterator::new(&mut iterator).collect())
 }
 
+pub fn get_iq_from_wav(path: &str) -> Result<Vec<f64>> {
+    let mut reader = hound::WavReader::open(path).unwrap();
+    let binding: Vec<std::result::Result<i16, hound::Error>> =
+        reader.samples::<i16>().collect::<Vec<_>>();
+    
+    let result = binding.into_iter().map(|x| {
+        x.unwrap() as f64
+    }).collect();
+
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
+    use dft::{self, Plan, Operation};
+    use hound;
 
     use super::*;
     const SAMPLEPATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
+
+    #[test]
+    fn test_dfts() {
+        let mut magnitudes = get_iq_from_wav(SAMPLEPATH).unwrap();
+        
+        let plan = Plan::new(Operation::Backward, 512);
+        dft::transform(&mut magnitudes[..512], &plan);
+
+        print!("{:?}", magnitudes);
+        
+
+    }
+
 
     #[test]
     fn amplitude_iter_test() {
         let _ = get_magnitudes_from_wav(SAMPLEPATH).unwrap();
     }
 
+    #[test]
     fn if_iter_test() {
         let _ = get_if_frequency_from_wav(SAMPLEPATH).unwrap();
     }

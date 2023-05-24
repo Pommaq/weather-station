@@ -26,7 +26,7 @@ fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyh
         .set_left_and_bottom_label_area_size(20);
 
     let mut chart_context = chart_builder
-        .build_cartesian_2d(0.0..sample_size as f64, -1.0..1.0)
+        .build_cartesian_2d(0.0..sample_size as f64, -1.0..255.0)
         .unwrap();
 
     chart_context.configure_mesh().draw().unwrap();
@@ -76,11 +76,11 @@ fn main() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use services::get_if_frequency_from_wav;
+    use services::{get_if_frequency_from_wav, get_magnitudes_from_wav, get_iq_from_wav};
 
     use crate::draw_chart;
-
-    const SAMPLE_PATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
+    // 44100hz sample rate.
+    const SAMPLE_PATH: &str = "../samples/mediacollege/440Hz_44100Hz_16bit_05sec.wav";
 
     #[test]
     fn is_drawable() {
@@ -89,5 +89,19 @@ mod tests {
         let sample = &amplitudes[4000..4000 + 3000];
 
         draw_chart(output, sample, sample.len()).unwrap();
+    }
+
+    #[test]
+    fn dft_drawable() {
+
+        let mut magnitudes = get_magnitudes_from_wav(SAMPLE_PATH).unwrap();
+        let output = "bbbbbb2.png";
+
+        let plan = dft::Plan::new(dft::Operation::Backward, 512);
+        dft::transform(&mut magnitudes[..512], &plan);
+        // The magnitudes are now encoded as i/q data. index(i)=frequency, q=phase
+        let mag : Vec<f64>= magnitudes[..512].iter().step_by(2).cloned().collect();
+
+        draw_chart(output, &mag, 512/2).unwrap();
     }
 }
