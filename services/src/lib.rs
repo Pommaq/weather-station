@@ -1,7 +1,6 @@
 extern crate external_services;
 
 use anyhow::{Ok, Result};
-use hound;
 use iq::IFIterator;
 use rustfft::{
     num_complex::{Complex, ComplexFloat},

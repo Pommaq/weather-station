@@ -8,7 +8,13 @@ use inquire::Text;
 use plotters::prelude::*;
 use services::get_if_frequency_from_wav;
 
-fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize, max_y: u32, max_x: u32) -> anyhow::Result<()> {
+fn draw_chart(
+    output_path: &str,
+    amplitudes: &[f64],
+    sample_size: usize,
+    max_y: u32,
+    max_x: u32,
+) -> anyhow::Result<()> {
     std::fs::File::create(output_path)?;
 
     let data = (0..sample_size)
@@ -76,7 +82,7 @@ fn main() -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use services::{ calculate_dft_from_wav};
+    use services::calculate_dft_from_wav;
 
     use crate::draw_chart;
     // 44100hz sample rate.
