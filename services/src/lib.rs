@@ -1,6 +1,6 @@
 extern crate external_services;
 
-use anyhow::{Ok, Result};
+use anyhow::Result;
 use iq::IFIterator;
 use rustfft::{
     num_complex::{Complex, ComplexFloat},
@@ -13,7 +13,7 @@ use rustfft::{
 pub mod iq;
 
 pub fn calculate_dft_from_wav(path: &str, samplerate: usize) -> Result<Vec<f64>> {
-    let iq = get_iq_from_wav(&path)?;
+    let iq = get_iq_from_wav(path)?;
 
     let window_size = 1024;
 
@@ -33,9 +33,9 @@ pub fn calculate_dft_from_wav(path: &str, samplerate: usize) -> Result<Vec<f64>>
     let leftovers = complex_nums.len() % window_size;
     let usable = complex_nums.len() - leftovers;
 
-    let mut input_buffer = &mut complex_nums[0..usable];
+    let input_buffer = &mut complex_nums[0..usable];
 
-    fft.process_with_scratch(&mut input_buffer, &mut scratch);
+    fft.process_with_scratch(input_buffer, &mut scratch);
 
     // calculate magnitudes
     let scaled = input_buffer
@@ -44,8 +44,7 @@ pub fn calculate_dft_from_wav(path: &str, samplerate: usize) -> Result<Vec<f64>>
             let magnitude = x.abs();
             let power = magnitude * magnitude;
             let normalized_power = power / ((samplerate * window_size) as f64);
-            let log = normalized_power.log(10f64);
-            log
+            normalized_power.log(10f64)
         })
         .collect::<Vec<_>>();
     Ok(scaled)
