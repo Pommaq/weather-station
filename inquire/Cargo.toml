@@ -10,4 +10,3 @@ anyhow = "1.0.71"
 inquire = "0.6.2"
 plotters = "0.3.4"
 services={path="../services"}
-dft = "0.5.5"

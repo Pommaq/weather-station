@@ -8,7 +8,7 @@ use inquire::Text;
 use plotters::prelude::*;
 use services::get_if_frequency_from_wav;
 
-fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyhow::Result<()> {
+fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize, max_y: u32, max_x: u32) -> anyhow::Result<()> {
     std::fs::File::create(output_path)?;
 
     let data = (0..sample_size)
@@ -16,7 +16,7 @@ fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyh
         .collect::<Vec<(f64, f64)>>();
 
     // Set number of pixels on drawing
-    let drawing_area = BitMapBackend::new(output_path, (4000 as u32, 1000)).into_drawing_area();
+    let drawing_area = BitMapBackend::new(output_path, (1024, 1024)).into_drawing_area();
 
     drawing_area.fill(&WHITE).unwrap();
 
@@ -26,7 +26,7 @@ fn draw_chart(output_path: &str, amplitudes: &[f64], sample_size: usize) -> anyh
         .set_left_and_bottom_label_area_size(20);
 
     let mut chart_context = chart_builder
-        .build_cartesian_2d(0.0..sample_size as f64, -1.0..255.0)
+        .build_cartesian_2d(0.0..max_x as f64, 0.0..max_y as f64)
         .unwrap();
 
     chart_context.configure_mesh().draw().unwrap();
@@ -69,39 +69,26 @@ fn main() -> anyhow::Result<()> {
 
     let output_path = Text::new("Enter output filename").prompt()?;
 
-    draw_chart(&output_path, &amplitudes, 10000)?;
+    //draw_chart(&output_path, &amplitudes, 10000)?;
 
     Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use services::{get_if_frequency_from_wav, get_magnitudes_from_wav, get_iq_from_wav};
+    use services::{ calculate_dft_from_wav};
 
     use crate::draw_chart;
     // 44100hz sample rate.
-    const SAMPLE_PATH: &str = "../samples/mediacollege/440Hz_44100Hz_16bit_05sec.wav";
+    const SAMPLE_PATH: &str = "../samples/sdrplay/SDRuno_20200904_204456Z_516kHz.wav";
+    const SAMPLERATE: usize = 62500;
 
     #[test]
     fn is_drawable() {
-        let amplitudes = get_if_frequency_from_wav(SAMPLE_PATH).unwrap();
+        let amplitudes = calculate_dft_from_wav(SAMPLE_PATH, SAMPLERATE).unwrap();
         let output = "aaaa.png";
         let sample = &amplitudes[4000..4000 + 3000];
 
-        draw_chart(output, sample, sample.len()).unwrap();
-    }
-
-    #[test]
-    fn dft_drawable() {
-
-        let mut magnitudes = get_magnitudes_from_wav(SAMPLE_PATH).unwrap();
-        let output = "bbbbbb2.png";
-
-        let plan = dft::Plan::new(dft::Operation::Backward, 512);
-        dft::transform(&mut magnitudes[..512], &plan);
-        // The magnitudes are now encoded as i/q data. index(i)=frequency, q=phase
-        let mag : Vec<f64>= magnitudes[..512].iter().step_by(2).cloned().collect();
-
-        draw_chart(output, &mag, 512/2).unwrap();
+        draw_chart(output, sample, sample.len(), 2, 3000).unwrap();
     }
 }

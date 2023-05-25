@@ -1,16 +1,56 @@
 extern crate external_services;
-extern crate persistence;
 
 use anyhow::{Ok, Result};
-use dft;
 use hound;
 use iq::IFIterator;
+use rustfft::{
+    num_complex::{Complex, ComplexFloat},
+    FftPlanner,
+};
 
 /// I and Q values must be of equal frequency for all functions in this module
 /// and are assumed to be shifted 90degrees from eachother
 /// as is the custom with IQ modulation
 pub mod iq;
 
+pub fn calculate_dft_from_wav(path: &str, samplerate: usize) -> Result<Vec<f64>> {
+    let iq = get_iq_from_wav(&path)?;
+
+    let window_size = 1024;
+
+    let mut planner = FftPlanner::new();
+    let fft = planner.plan_fft_forward(window_size);
+    let mut scratch = vec![Complex::default(); window_size];
+
+    let mut complex_nums = iq
+        .windows(2)
+        .map(|win| {
+            let i = win[0];
+            let q = win[1];
+            Complex { re: i, im: q }
+        })
+        .collect::<Vec<_>>();
+
+    let leftovers = complex_nums.len() % window_size;
+    let usable = complex_nums.len() - leftovers;
+
+    let mut input_buffer = &mut complex_nums[0..usable];
+
+    fft.process_with_scratch(&mut input_buffer, &mut scratch);
+
+    // calculate magnitudes
+    let scaled = input_buffer
+        .iter_mut()
+        .map(|x| {
+            let magnitude = x.abs();
+            let power = magnitude * magnitude;
+            let normalized_power = power / ((samplerate * window_size) as f64);
+            let log = normalized_power.log(10f64);
+            log
+        })
+        .collect::<Vec<_>>();
+    Ok(scaled)
+}
 
 pub fn get_magnitudes_from_wav(path: &str) -> Result<Vec<f64>> {
     use iq::MagnitudeIterator;
@@ -46,34 +86,23 @@ pub fn get_iq_from_wav(path: &str) -> Result<Vec<f64>> {
     let mut reader = hound::WavReader::open(path).unwrap();
     let binding: Vec<std::result::Result<i16, hound::Error>> =
         reader.samples::<i16>().collect::<Vec<_>>();
-    
-    let result = binding.into_iter().map(|x| {
-        x.unwrap() as f64
-    }).collect();
+
+    let result = binding.into_iter().map(|x| x.unwrap() as f64).collect();
 
     Ok(result)
 }
 
 #[cfg(test)]
 mod tests {
-    use dft::{self, Plan, Operation};
-    use hound;
 
     use super::*;
-    const SAMPLEPATH: &str = "../samples/navtex_2023-02-21T16_40_30_201.wav";
+    const SAMPLEPATH: &str = "../samples/sdrplay/SDRuno_20200904_204456Z_516kHz.wav";
+    const SAMPLERATE: usize = 62500;
 
     #[test]
     fn test_dfts() {
-        let mut magnitudes = get_iq_from_wav(SAMPLEPATH).unwrap();
-        
-        let plan = Plan::new(Operation::Backward, 512);
-        dft::transform(&mut magnitudes[..512], &plan);
-
-        print!("{:?}", magnitudes);
-        
-
+        let psd = calculate_dft_from_wav(SAMPLEPATH, SAMPLERATE).unwrap();
     }
-
 
     #[test]
     fn amplitude_iter_test() {
