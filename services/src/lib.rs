@@ -12,10 +12,12 @@ use rustfft::{
 /// as is the custom with IQ modulation
 pub mod iq;
 
-pub fn calculate_dft_from_wav(path: &str, samplerate: usize) -> Result<Vec<f64>> {
-    let iq = get_iq_from_wav(path)?;
-
-    let window_size = 1024;
+pub fn calculate_dft_from_wav(
+    path: &str,
+    samplerate: usize,
+    window_size: usize,
+) -> Result<Vec<f64>> {
+    let iq = get_iq_from_mono_wav(path)?;
 
     let mut planner = FftPlanner::new();
     let fft = planner.plan_fft_forward(window_size);
@@ -90,6 +92,23 @@ pub fn get_iq_from_wav(path: &str) -> Result<Vec<f64>> {
     Ok(result)
 }
 
+pub fn get_iq_from_mono_wav(path: &str) -> Result<Vec<f64>> {
+    let mut reader = hound::WavReader::open(path).unwrap();
+    let binding: Vec<std::result::Result<i16, hound::Error>> =
+        reader.samples::<i16>().collect::<Vec<_>>();
+
+    let size = reader.len();
+    let mut result = Vec::with_capacity(size as usize * 2);
+    let iter = binding.into_iter();
+
+    for i in iter {
+        result.push(i? as f64);
+        result.push(0.0);
+    }
+
+    Ok(result)
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -99,7 +118,7 @@ mod tests {
 
     #[test]
     fn test_dfts() {
-        let psd = calculate_dft_from_wav(SAMPLEPATH, SAMPLERATE).unwrap();
+        let _ = calculate_dft_from_wav(SAMPLEPATH, SAMPLERATE, 1024).unwrap();
     }
 
     #[test]

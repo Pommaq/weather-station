@@ -91,10 +91,21 @@ mod tests {
 
     #[test]
     fn is_drawable() {
-        let amplitudes = calculate_dft_from_wav(SAMPLE_PATH, SAMPLERATE).unwrap();
-        let output = "aaaa.png";
-        let sample = &amplitudes[4000..4000 + 3000];
+        let window_size = 1024 * 2;
 
-        draw_chart(output, sample, sample.len(), 2, 3000).unwrap();
+        let amplitudes = calculate_dft_from_wav(SAMPLE_PATH, SAMPLERATE, window_size).unwrap();
+        let output = "aaaa.png";
+        let entry = 52;
+
+        let sample = &amplitudes[entry * window_size..(entry + 1) * window_size];
+
+        draw_chart(
+            output,
+            sample,
+            sample.len(),
+            2,
+            window_size.try_into().unwrap(),
+        )
+        .unwrap();
     }
 }
